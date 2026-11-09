@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>This is for you ❤️ - Sakura Bouquet</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Quicksand:wght@500;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background-color: #ffccd5;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Screen Overlay Transitions */
+    #landing-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: linear-gradient(135deg, #ffb3c1 0%, #ffccd5 50%, #fff0f5 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 1.2s ease-in-out, visibility 1.2s ease-in-out;
+    }
+
+    #landing-screen.hidden-screen {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* Envelope Styling & Animation */
+    .envelope-wrapper {
+      position: relative;
+      cursor: pointer;
+      transform-style: preserve-3d;
+      transition: transform 0.4s ease;
+    }
+
+    .envelope-wrapper:hover {
+      transform: scale(1.05) rotate(-1deg);
+    }
+
+    .envelope {
+      position: relative;
+      width: 260px;
+      height: 180px;
+      background: #ff758f;
+      border-radius: 12px;
+      box-shadow: 0 15px 35px rgba(255, 77, 109, 0.3), 0 5px 15px rgba(0, 0, 0, 0.08);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Envelope Flap Top */
+    .envelope::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 130px solid transparent;
+      border-right: 130px solid transparent;
+      border-top: 100px solid #ff4d6d;
+      transform-origin: top;
+      transition: transform 0.6s ease 0.2s;
+      z-index: 5;
+    }
+
+    /* Envelope Inner Shadow Lines */
+    .envelope::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 130px solid #ff8fa3;
+      border-right: 130px solid #ff8fa3;
+      border-bottom: 95px solid #ff758f;
+      border-radius: 0 0 12px 12px;
+      z-index: 4;
+    }
+
+    /* Envelope Heart Seal */
+    .heart-seal {
+      position: absolute;
+      z-index: 6;
+      width: 48px;
+      height: 48px;
+      background: #c77dff;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(199, 125, 255, 0.4);
+      transition: transform 0.4s ease;
+      animation: pulse-heart 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulse-heart {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    /* Letter inside envelope */
+    .letter {
+      position: absolute;
+      bottom: 10px;
+      width: 220px;
+      height: 140px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 3;
+      transition: transform 0.8s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 12px;
+      text-align: center;
+    }
+
+    /* Open State Classes */
+    .envelope-wrapper.open .envelope::before {
+      transform: rotateX(180deg);
+      z-index: 2;
+    }
+
+    .envelope-wrapper.open .letter {
+      transform: translateY(-80px) scale(1.05);
+      z-index: 7;
+    }
+
+    .envelope-wrapper.open .heart-seal {
+      transform: scale(0);
+    }
+
+    /* Canvas Screen Container */
+    #canvas-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0b0f19;
+    }
+
+    canvas {
+      box-shadow: 0 0 35px rgba(255, 182, 193, 0.25);
+      border-radius: 16px;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .cute-title {
+      font-family: 'Fredoka', cursive;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hidden YouTube Iframe Audio Player for 'Old Love' by Yuji & Putri Dahlia -->
+  <div id="yt-player" class="hidden"></div>
+
+  <!-- Audio Player Fallback -->
+  <audio id="bg-music" loop preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Floating Music Toggle Button -->
+  <button id="music-toggle" onclick="toggleMusic()" class="fixed top-4 right-4 z-40 bg-white/80 backdrop-blur-md p-3 rounded-full shadow-lg border border-pink-200 text-pink-500 hover:scale-110 transition-transform duration-300 flex items-center justify-center opacity-0 pointer-events-none">
+    <span id="music-icon" class="text-xl">🎵</span>
+  </button>
+
+  <!-- 1. LANDING SCREEN (Love Letter Opening) -->
+  <div id="landing-screen">
+    <!-- Top Cute Title -->
+    <div class="text-center mb-8 animate-bounce">
+      <h1 class="cute-title text-3xl md:text-4xl font-bold text-pink-600 drop-shadow-md">
+        this is for you ❤️
+      </h1>
+      <p class="text-sm md:text-base text-pink-400 font-semibold mt-2">
+        Ketuk suratnya untuk membuka hadiah manis ✨
+      </p>
+    </div>
+
+    <!-- Interactive Envelope -->
+    <div class="envelope-wrapper" id="envelope-btn" onclick="openSurprise()">
+      <div class="envelope">
+        <div class="heart-seal">❤️</div>
+        <div class="letter">
+          <p class="cute-title text-pink-500 font-bold text-sm">Special Flower Bouquet</p>
+          <span class="text-xs text-pink-400 mt-1">woop u 3000 biyu</span>
+          <span class="text-lg mt-1">🌸✨</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. MAIN CANVAS SCREEN -->
+  <div id="canvas-container">
+    <canvas id="flowerCanvas" width="500" height="600"></canvas>
+  </div>
+
+  <!-- YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    // --- TRANSITION & AUDIO LOGIC ---
+    let isOpened = false;
+    let ytPlayer = null;
+    let isYtReady = false;
+    let isMuted = false;
+
+    const bgMusic = document.getElementById('bg-music');
+    const musicToggle = document.getElementById('music-toggle');
+    const musicIcon = document.getElementById('music-icon');
+
+    // Initialize YouTube Player with Video ID 'SctrVF37GAQ' (Old Love - Yuji & Putri Dahlia)
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('yt-player', {
+        height: '0',
+        width: '0',
+        videoId: 'SctrVF37GAQ',
+        playerVars: {
+          'autoplay': 0,
+          'controls': 0,
+          'loop': 1,
+          'playlist': 'SctrVF37GAQ'
+        },
+        events: {
+          'onReady': () => { isYtReady = true; }
+        }
+      });
+    }
+
+    function openSurprise() {
+      if (isOpened) return;
+      isOpened = true;
+
+      // Play "Old Love" via YouTube API if ready, or fallback audio
+      if (isYtReady && ytPlayer && ytPlayer.playVideo) {
+        ytPlayer.playVideo();
+      } else {
+        bgMusic.play().catch(e => console.log("Audio autoplay prevented:", e));
+      }
+
+      const envelope = document.getElementById('envelope-btn');
+      const landingScreen = document.getElementById('landing-screen');
+
+      // Play envelope open animation
+      envelope.classList.add('open');
+
+      // Show floating music toggle
+      musicToggle.classList.remove('opacity-0', 'pointer-events-none');
+
+      // Smooth fade transition to Canvas screen
+      setTimeout(() => {
+        landingScreen.classList.add('hidden-screen');
+        // Start Canvas animation after fade starts
+        startBouquetAnimation();
+      }, 1000);
+    }
+
+    function toggleMusic() {
+      if (!isMuted) {
+        isMuted = true;
+        musicIcon.textContent = '🔇';
+        if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
+          ytPlayer.pauseVideo();
+        }
+        bgMusic.pause();
+      } else {
+        isMuted = false;
+        musicIcon.textContent = '🎵';
+        if (isYtReady && ytPlayer && ytPlayer.playVideo) {
+          ytPlayer.playVideo();
+        } else {
+          bgMusic.play();
+        }
+      }
+    }
+
+    // --- CANVAS ANIMATION LOGIC ---
+    const canvas = document.getElementById('flowerCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let progress = 0; 
+    let sparkles = []; 
+    let fireflies = []; 
+    let animationStarted = false;
+
+    // Initialize Glowing Fireflies
+    for (let i = 0; i < 15; i++) {
+      fireflies.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * (canvas.height * 0.8),
+        size: Math.random() * 2 + 1.5,
+        speedX: (Math.random() - 0.5) * 0.8,
+        speedY: (Math.random() - 0.5) * 0.8,
+        pulseOffset: Math.random() * Math.PI * 2
+      });
+    }
+
+    // Pastel Butterflies Configuration
+    const topButterflies = [
+      { color: 'rgba(255, 143, 163, 0.95)', offsetX: 0, offsetY: 0, speedMultiplier: 1, radiusX: 120, radiusY: 55 },
+      { color: 'rgba(215, 182, 255, 0.95)', offsetX: 2.1, offsetY: 1.2, speedMultiplier: 0.8, radiusX: 90, radiusY: 45 },
+      { color: 'rgba(162, 210, 255, 0.95)', offsetX: 4.2, offsetY: 2.4, speedMultiplier: 1.1, radiusX: 135, radiusY: 65 }
+    ];
+
+    const grassButterflies = [
+      { color: 'rgba(255, 223, 186, 0.95)', baseX: 85, baseY: 535, rangeX: 25, rangeY: 15, speed: 3.5 },
+      { color: 'rgba(189, 224, 254, 0.95)', baseX: 415, baseY: 545, rangeX: 25, rangeY: 15, speed: 4.5 }
+    ];
+
+    // Background Stars
+    function drawStars() {
+      for (let i = 0; i < 75; i++) {
+        const x = (i * 37) % canvas.width;
+        const y = (i * 53) % (canvas.height * 0.7);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 1.3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + Math.sin(Date.now() * 0.003 + i) * 0.6})`;
+        ctx.fill();
+      }
+    }
+
+    // Tiny Flowers on Grass
+    function drawTinyFlowerOnGrass(x, y, color) {
+      const petalSize = 3.5;
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * 2 * Math.PI) / 5;
+        const px = x + Math.cos(angle) * petalSize;
+        const py = y + Math.sin(angle) * petalSize;
+        ctx.beginPath();
+        ctx.arc(px, py, petalSize, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffea00'; 
+      ctx.fill();
+    }
+
+    // Cloud Style Grass Base
+    function drawCloudGrass() {
+      const scale = Math.min(progress * 1.2, 1);
+      
+      // Left Cloud Grass
+      ctx.fillStyle = '#2b9348';
+      ctx.beginPath();
+      ctx.arc(0 * scale, 600, 110 * scale, 0, Math.PI * 2);
+      ctx.arc(70 * scale, 600, 90 * scale, 0, Math.PI * 2);
+      ctx.arc(130 * scale, 600, 60 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#55a630';
+      ctx.beginPath();
+      ctx.arc(-20 * scale, 620, 100 * scale, 0, Math.PI * 2);
+      ctx.arc(50 * scale, 610, 75 * scale, 0, Math.PI * 2);
+      ctx.arc(110 * scale, 620, 50 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Right Cloud Grass
+      ctx.fillStyle = '#2b9348';
+      ctx.beginPath();
+      ctx.arc(500 * scale, 600, 110 * scale, 0, Math.PI * 2);
+      ctx.arc(430 * scale, 600, 90 * scale, 0, Math.PI * 2);
+      ctx.arc(370 * scale, 600, 60 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#55a630';
+      ctx.beginPath();
+      ctx.arc(520 * scale, 620, 100 * scale, 0, Math.PI * 2);
+      ctx.arc(450 * scale, 610, 75 * scale, 0, Math.PI * 2);
+      ctx.arc(390 * scale, 620, 50 * scale, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tiny Flowers Appearing on Grass
+      if (progress > 0.8) {
+        drawTinyFlowerOnGrass(30, 550, 'rgba(255, 182, 193, 0.9)');
+        drawTinyFlowerOnGrass(75, 535, 'rgba(255, 255, 255, 0.9)');
+        drawTinyFlowerOnGrass(110, 565, 'rgba(255, 192, 203, 0.9)');
+        drawTinyFlowerOnGrass(40, 580, 'rgba(230, 190, 255, 0.9)');
+        
+        drawTinyFlowerOnGrass(470, 550, 'rgba(255, 255, 255, 0.9)');
+        drawTinyFlowerOnGrass(425, 535, 'rgba(255, 182, 193, 0.9)');
+        drawTinyFlowerOnGrass(380, 565, 'rgba(230, 190, 255, 0.9)');
+        drawTinyFlowerOnGrass(450, 580, 'rgba(255, 192, 203, 0.9)');
+      }
+    }
+
+    // Bouquet Wrapper Layers & Ribbon
+    function drawBouquetWrapper() {
+      if (progress < 0.6) return;
+
+      const wrapAlpha = Math.min((progress - 0.6) * 2.5, 1);
+      ctx.save();
+      ctx.globalAlpha = wrapAlpha;
+
+      // Soft Pink Outer Paper Wrapper
+      ctx.beginPath();
+      ctx.moveTo(150, 370);
+      ctx.lineTo(350, 370);
+      ctx.lineTo(275, 510);
+      ctx.lineTo(225, 510);
+      ctx.closePath();
+      
+      let gradientWrap = ctx.createLinearGradient(150, 370, 350, 510);
+      gradientWrap.addColorStop(0, 'rgba(255, 218, 224, 0.85)');
+      gradientWrap.addColorStop(1, 'rgba(255, 182, 193, 0.95)');
+      ctx.fillStyle = gradientWrap;
+      ctx.fill();
+
+      // Fold Lines
+      ctx.beginPath();
+      ctx.moveTo(150, 370);
+      ctx.quadraticCurveTo(180, 420, 225, 510);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(350, 370);
+      ctx.quadraticCurveTo(320, 420, 275, 510);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Ribbon Tie
+      const knotX = 250;
+      const knotY = 460;
+
+      // Ribbon Wings
+      ctx.beginPath();
+      ctx.ellipse(knotX - 22, knotY - 3, 18, 10, -0.3, 0, Math.PI * 2);
+      ctx.ellipse(knotX + 22, knotY - 3, 18, 10, 0.3, 0, Math.PI * 2);
+      ctx.fillStyle = '#ff4d6d';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Ribbon Tails
+      ctx.beginPath();
+      ctx.moveTo(knotX - 5, knotY);
+      ctx.quadraticCurveTo(knotX - 18, knotY + 25, knotX - 25, knotY + 45);
+      ctx.lineTo(knotX - 12, knotY + 40);
+      ctx.lineTo(knotX, knotY + 5);
+      ctx.fillStyle = '#ff4d6d';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(knotX + 5, knotY);
+      ctx.quadraticCurveTo(knotX + 18, knotY + 25, knotX + 25, knotY + 45);
+      ctx.lineTo(knotX + 12, knotY + 40);
+      ctx.lineTo(knotX, knotY + 5);
+      ctx.fillStyle = '#ff4d6d';
+      ctx.fill();
+
+      // Center Ribbon Knot
+      ctx.beginPath();
+      ctx.arc(knotX, knotY, 7, 0, Math.PI * 2);
+      ctx.fillStyle = '#c77dff';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Bottom Center Persistent Text
+    function drawBottomText() {
+      if (progress < 0.5) return;
+      
+      ctx.save();
+      ctx.font = "bold 18px 'Quicksand', sans-serif";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.textAlign = "center";
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = "rgba(255, 182, 193, 0.8)";
+      
+      ctx.fillText("woop u 3000 biyu", 250, 540); 
+      ctx.restore();
+    }
+
+    // Top Curved Text
+    function drawCurvedTopText(text) {
+      if (progress < 0.5) return;
+
+      ctx.save();
+      ctx.font = "bold 20px 'Quicksand', sans-serif";
+      ctx.fillStyle = "rgba(255, 220, 240, 0.95)";
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = "rgba(255, 150, 200, 0.9)";
+      ctx.textAlign = "center";
+
+      const radius = 175;
+      const centerX = 250;
+      const centerY = 245;
+      const totalAngle = Math.PI * 0.75;
+      const startAngle = -Math.PI / 2 - totalAngle / 2;
+
+      const chars = text.split('');
+      const angleStep = totalAngle / (chars.length - 1 || 1);
+
+      chars.forEach((char, i) => {
+        ctx.save();
+        const angle = startAngle + i * angleStep;
+        
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+
+        ctx.translate(x, y);
+        ctx.rotate(angle + Math.PI / 2);
+
+        ctx.fillText(char, 0, 0);
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+
+    // Symmetric Leaf Pairs
+    function drawStemLeaf(x, y, angle) {
+      if (progress < 0.7) return;
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      
+      ctx.beginPath();
+      ctx.ellipse(10, 0, 14, 5, 0.2, 0, Math.PI * 2);
+      ctx.fillStyle = '#38b000';
+      ctx.fill();
+      
+      ctx.restore();
+    }
+
+    // Stem Growth Logic
+    function drawStem(startX, startY, endX, endY) {
+      const currentX = startX + (endX - startX) * Math.min(progress, 1);
+      const currentY = startY + (endY - startY) * Math.min(progress, 1);
+
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.quadraticCurveTo(startX + (endX - startX) * 0.5, startY - 100, currentX, currentY);
+      ctx.strokeStyle = '#2b9348';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      if (progress > 0.7) {
+        let leaf1X = startX + (endX - startX) * 0.4;
+        let leaf1Y = startY + (endY - startY) * 0.4 - 15;
+        drawStemLeaf(leaf1X - 5, leaf1Y, -0.55);
+
+        let leaf2X = startX + (endX - startX) * 0.65;
+        let leaf2Y = startY + (endY - startY) * 0.65 - 10;
+        drawStemLeaf(leaf2X + 5, leaf2Y, 0.55);
+      }
+      
+      return { x: currentX, y: currentY };
+    }
+
+    // 5-Petal Sakura Flower Blooming
+    function drawFlower(x, y, petalCount = 5, size = 22, scale = 1) {
+      if (progress < 0.8) return; 
+      const currentSize = size * Math.min((progress - 0.8) * 5, 1) * scale;
+
+      for (let i = 0; i < 5; i++) {
+        const angle = (i * 2 * Math.PI) / 5;
+        const petalX = x + Math.cos(angle) * (currentSize * 0.65);
+        const petalY = y + Math.sin(angle) * (currentSize * 0.65);
+
+        ctx.beginPath();
+        ctx.arc(petalX, petalY, currentSize * 0.55, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 182, 193, 0.95)';
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.arc(x, y, currentSize * 0.35, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffe6a7';
+      ctx.fill();
+    }
+
+    // Fireflies Animation
+    function updateAndDrawFireflies() {
+      if (progress < 0.6) return;
+
+      const time = Date.now() * 0.003;
+      for (let f of fireflies) {
+        f.x += f.speedX;
+        f.y += f.speedY;
+
+        if (f.x < 20 || f.x > canvas.width - 20) f.speedX *= -1;
+        if (f.y < 50 || f.y > canvas.height - 80) f.speedY *= -1;
+
+        const glow = Math.sin(time + f.pulseOffset) * 0.5 + 0.5;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(220, 255, 100, ${0.3 + glow * 0.7})`;
+        ctx.shadowBlur = 12 * glow;
+        ctx.shadowColor = '#ccff00';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Butterfly Sparkle Trails
+    function updateAndDrawSparkles() {
+      for (let i = sparkles.length - 1; i >= 0; i--) {
+        let s = sparkles[i];
+        s.y += s.speedY;
+        s.alpha -= 0.02;
+        s.size *= 0.95;
+
+        if (s.alpha <= 0) {
+          sparkles.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 235, 150, ${s.alpha})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = '#fff';
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // Helper: Render Butterfly Wing Shape
+    function renderButterflyShape(color, wingFlap, sizeScale = 1) {
+      ctx.save();
+      ctx.scale(sizeScale, sizeScale);
+
+      // Left Wing
+      ctx.beginPath();
+      ctx.ellipse(-8 * Math.abs(wingFlap), -6, 14 * Math.abs(wingFlap), 9, -0.2, 0, Math.PI * 2);
+      ctx.ellipse(-6 * Math.abs(wingFlap), 6, 10 * Math.abs(wingFlap), 6, 0.3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Right Wing
+      ctx.beginPath();
+      ctx.ellipse(8 * Math.abs(wingFlap), -6, 14 * Math.abs(wingFlap), 9, 0.2, 0, Math.PI * 2);
+      ctx.ellipse(6 * Math.abs(wingFlap), 6, 10 * Math.abs(wingFlap), 6, -0.3, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Body
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 2, 9, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#4a0e17';
+      ctx.fill();
+
+      // Antennae
+      ctx.beginPath();
+      ctx.moveTo(-1, -8);
+      ctx.lineTo(-4, -13);
+      ctx.moveTo(1, -8);
+      ctx.lineTo(4, -13);
+      ctx.strokeStyle = '#4a0e17';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // Draw Top & Grass Butterflies
+    function drawButterflies() {
+      if (progress < 0.9) return;
+
+      const time = Date.now() * 0.002;
+
+      // 3 Top Flying Butterflies with Sparkles
+      topButterflies.forEach((b, index) => {
+        const bx = 250 + Math.sin(time * b.speedMultiplier + b.offsetX) * b.radiusX;
+        const by = 190 + Math.cos((time * 1.5) * b.speedMultiplier + b.offsetY) * b.radiusY;
+        const wingFlap = Math.sin(time * 12 + index);
+
+        if (Math.random() < 0.25) {
+          sparkles.push({
+            x: bx + (Math.random() - 0.5) * 10,
+            y: by + (Math.random() - 0.5) * 10,
+            size: Math.random() * 3 + 1,
+            alpha: 1,
+            speedY: Math.random() * 0.5 - 0.2
+          });
+        }
+
+        ctx.save();
+        ctx.translate(bx, by);
+        renderButterflyShape(b.color, wingFlap, 1);
+        ctx.restore();
+      });
+
+      // 2 Grass Butterflies Playing Below
+      grassButterflies.forEach((gb, index) => {
+        const gTime = Date.now() * 0.003 * gb.speed;
+        const gx = gb.baseX + Math.sin(gTime) * gb.rangeX;
+        const gy = gb.baseY + Math.cos(gTime * 1.5) * gb.rangeY;
+        const gWingFlap = Math.sin(gTime * 4);
+
+        ctx.save();
+        ctx.translate(gx, gy);
+        renderButterflyShape(gb.color, gWingFlap, 0.85);
+        ctx.restore();
+      });
+    }
+
+    // Main Animation Loop
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      drawStars();
+      drawCloudGrass();
+      
+      let tip1 = drawStem(250, 480, 250, 220);
+      let tip2 = drawStem(250, 480, 170, 270);
+      let tip3 = drawStem(250, 480, 330, 270);
+      let tip4 = drawStem(250, 480, 130, 340);
+      let tip5 = drawStem(250, 480, 370, 340);
+
+      drawBouquetWrapper();
+
+      drawBottomText();
+      drawCurvedTopText("For My Cutie Biyu ✨");
+
+      drawFlower(tip1.x, tip1.y, 5, 28);
+      drawFlower(tip2.x, tip2.y, 5, 22);
+      drawFlower(tip3.x, tip3.y, 5, 22);
+      drawFlower(tip4.x, tip4.y, 5, 18);
+      drawFlower(tip5.x, tip5.y, 5, 18);
+
+      updateAndDrawFireflies();
+      updateAndDrawSparkles();
+      drawButterflies();
+
+      if (progress < 1.2) {
+        progress += 0.008;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function startBouquetAnimation() {
+      if (!animationStarted) {
+        animationStarted = true;
+        animate();
+      }
+    }
+  </script>
+</body>
+</html>
